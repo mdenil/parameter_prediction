@@ -1,0 +1,9 @@
+pp_env/
+.pkgs/
+*~
+*.bak
+*.swp
+*.so
+*.o
+*.pyc
+*.pkl
