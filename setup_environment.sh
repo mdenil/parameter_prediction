@@ -13,6 +13,10 @@ function install_theano {
     pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
 }
 
+function install_joblib {
+    pip install joblib
+}
+
 function install_pylearn2 {
     DIR="$1"
 
@@ -31,6 +35,7 @@ conda create --yes --prefix pp_env accelerate pip nose
 source activate "$(pwd)/$ENV"
 
 safe_call install_theano
+safe_call install_joblib
 safe_call install_pylearn2 "$EXTERNAL"
 
 cat <<EOF
