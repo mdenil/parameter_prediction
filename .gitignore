@@ -7,3 +7,6 @@ pp_env/
 *.o
 *.pyc
 *.pkl
+*.npy
+*.npz
+*.joblib
