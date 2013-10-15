@@ -1,0 +1,7 @@
+old/
+*.swp
+*.bak
+*~
+*.o
+*.so
+*.pyc
