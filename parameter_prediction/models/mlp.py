@@ -45,7 +45,9 @@ class SubsampledDictionaryLayer(mlp.Layer):
 
         W = self.dictionary.get_subdictionary(indices)
 
-        W = sharedX(W)
+        # dictionary atoms are stored in rows but transformers expect them to
+        # be in columns.
+        W = sharedX(W.T)
         W.name = self.layer_name + "_W"
         self.transformer = MatrixMul(W)
 
