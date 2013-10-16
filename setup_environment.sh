@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 function safe_call {
     # usage:
     #   safe_call function param1 param2 ...
@@ -18,7 +20,7 @@ function install_joblib {
 }
 
 function install_matplotlib {
-    conda install matplotlib
+    conda install --yes matplotlib
 }
 
 function install_pylearn2 {
@@ -35,19 +37,19 @@ EXTERNAL=external
 
 rm -rf $ENV
 
-conda create --yes --prefix pp_env accelerate pip nose
+conda create --yes --prefix $ENV accelerate pip nose
 source activate "$(pwd)/$ENV"
 
 safe_call install_theano
 safe_call install_joblib
-safe_call install matplotlib
+safe_call install_matplotlib
 safe_call install_pylearn2 "$EXTERNAL"
 
 cat <<EOF
 
 Run:
 
-    source activate "$(pwd)/$ENV"
+    source activate "\$(pwd)/$ENV"
 
 to activate the environment.  When you're done you can run
 
