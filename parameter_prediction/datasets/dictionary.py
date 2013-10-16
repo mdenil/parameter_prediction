@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+import string
 
 """
 Dictionaries are (either implicitly or explicitly) a matrix where the rows are
@@ -49,9 +50,33 @@ def enumerate_space(extent):
     """
     return itertools.imap(np.asarray, itertools.product(*map(xrange, extent)))
 
+class IndexSpaceDictionary(object):
+    def __init__(self, extent):
+        self.extent = np.asarray(extent).reshape((-1,1))
+        # _points is every coordinate in the (discrete) space indexed in
+        # cannonical order.  Each column gives the coordinates of a different
+        # point.
+        self._points = np.vstack(enumerate_space(self.extent)).T
 
-class GaussianKernelDictionary(object):
+    def get_subdictionary(self, indices):
+        return np.vstack([self.get_atom(index) for index in indices])
+
+    def get_atom(self, index):
+        raise NotImplementedError
+
+    @property
+    def input_dim(self):
+        return np.prod(self.extent)
+
+    @property
+    def size(self):
+        return np.prod(self.extent)
+
+
+class GaussianKernelDictionary(IndexSpaceDictionary):
     def __init__(self, extent, scale):
+        super(GaussianKernelDictionary, self).__init__(extent)
+
         try:
             iter(scale)
             scale_iterable = True
@@ -64,23 +89,32 @@ class GaussianKernelDictionary(object):
             scale = [scale]*len(extent)
 
         self.scale = np.asarray(scale).reshape((-1,1))
-        self.extent = np.asarray(extent)
-        self.__points = np.vstack(enumerate_space(self.extent)).T
 
-    def get_subdictionary(self, indices):
-        return np.vstack([self.get_atom(index) for index in indices])
 
     def get_atom(self, index):
-        point = np.atleast_2d(self.__points[:,index]).T
-        E = np.sum((self.__points - point)**2 / self.scale**2, axis=0)
+        point = np.atleast_2d(self._points[:,index]).T
+        E = np.sum((self._points - point)**2 / self.scale**2, axis=0)
         atom = np.exp(-0.5 * E)
         return atom 
 
-    @property
-    def input_dim(self):
-        return np.prod(self.extent)
+class DCTDictionary(IndexSpaceDictionary):
+    def get_atom(self, index):
+        # http://en.wikipedia.org/wiki/Discrete_cosine_transform#Multidimensional_DCTs
 
-    @property
-    def size(self):
-        return np.prod(self.extent)
+        point = self._points[:,index]
+
+        dims = []
+        for i,e in enumerate(self.extent):
+            n = np.atleast_2d(np.arange(e))
+            dims.append(np.cos(np.pi / self.extent[i,0] * (n+0.5) * point[i]).ravel())
+
+        # set up einsum for an outer product
+        #
+        # this will fail with more than len(alphabet) dimensions (lol wtf are you doing?)
+        from_idx = ",".join(string.ascii_lowercase[:len(dims)])
+        to_idx = string.ascii_lowercase[:len(dims)]
+
+        atom_topo = np.einsum(from_idx + "->" + to_idx, *dims)
+
+        return atom_topo.ravel()
 
