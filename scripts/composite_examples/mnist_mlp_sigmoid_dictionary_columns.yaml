@@ -12,7 +12,6 @@
                     layer_name: 'h0',
                     layers: [
                         !obj:pylearn2.models.mlp.MLP {
-                            nvis: 784,
                             layers: [
                                  !obj:parameter_prediction.models.mlp.SubsampledDictionaryLayer {
                                      layer_name: 'h0a0',
@@ -30,7 +29,6 @@
                             ],
                         },
                         !obj:pylearn2.models.mlp.MLP {
-                            nvis: 784,
                             layers: [
                                  !obj:parameter_prediction.models.mlp.SubsampledDictionaryLayer {
                                      layer_name: 'h0b0',
