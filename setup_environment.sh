@@ -17,6 +17,10 @@ function install_joblib {
     pip install joblib
 }
 
+function install_matplotlib {
+    conda install matplotlib
+}
+
 function install_pylearn2 {
     DIR="$1"
 
@@ -36,6 +40,7 @@ source activate "$(pwd)/$ENV"
 
 safe_call install_theano
 safe_call install_joblib
+safe_call install matplotlib
 safe_call install_pylearn2 "$EXTERNAL"
 
 cat <<EOF
