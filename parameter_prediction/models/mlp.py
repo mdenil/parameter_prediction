@@ -4,6 +4,13 @@ from pylearn2.space import VectorSpace
 from pylearn2.utils import sharedX
 from pylearn2.linear.matrixmul import MatrixMul
 
+class PureLinear(mlp.Linear):
+    def cost(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def fprop(self, state_below):
+        return self._linear_part(state_below)
+
 class SubsampledDictionaryLayer(mlp.Layer):
     def __init__(self, dim, layer_name, dictionary):
         self.dim = dim
