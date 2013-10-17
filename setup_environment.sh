@@ -23,6 +23,10 @@ function install_matplotlib {
     conda install --yes matplotlib
 }
 
+function install_jinja2 {
+    conda install --yes jinja2
+}
+
 function install_pylearn2 {
     DIR="$1"
 
@@ -43,6 +47,7 @@ source activate "$(pwd)/$ENV"
 safe_call install_theano
 safe_call install_joblib
 safe_call install_matplotlib
+safe_call install_jinja2
 safe_call install_pylearn2 "$EXTERNAL"
 
 cat <<EOF
