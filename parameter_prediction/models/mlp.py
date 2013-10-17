@@ -29,7 +29,7 @@ class SubsampledDictionaryLayer(mlp.Layer):
         else:
             self.requires_reformat = True
             self.input_dim = space.get_total_dimension()
-            self.desired_space = VectorSapce(self.input_dim)
+            self.desired_space = VectorSpace(self.input_dim)
 
         self.output_space = VectorSpace(self.dim)
 
