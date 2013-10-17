@@ -53,10 +53,6 @@ def enumerate_space(extent):
 class IndexSpaceDictionary(object):
     def __init__(self, extent):
         self.extent = np.asarray(extent).reshape((-1,1))
-        # _points is every coordinate in the (discrete) space indexed in
-        # cannonical order.  Each column gives the coordinates of a different
-        # point.
-        self._points = np.vstack(enumerate_space(self.extent)).T
 
     def get_subdictionary(self, indices):
         return np.vstack([self.get_atom(index) for index in indices])
@@ -76,6 +72,11 @@ class IndexSpaceDictionary(object):
 class GaussianKernelDictionary(IndexSpaceDictionary):
     def __init__(self, extent, scale):
         super(GaussianKernelDictionary, self).__init__(extent)
+
+        # _points is every coordinate in the (discrete) space indexed in
+        # cannonical order.  Each column gives the coordinates of a different
+        # point.
+        self._points = np.vstack(enumerate_space(self.extent)).T
 
         try:
             iter(scale)
@@ -98,15 +99,24 @@ class GaussianKernelDictionary(IndexSpaceDictionary):
         return atom 
 
 class DCTDictionary(IndexSpaceDictionary):
+    def __init__(self, spatial_extent, frequency_extent):
+        self.spatial_extent = np.atleast_2d(spatial_extent).T
+        self.frequency_extent = np.atleast_2d(frequency_extent).T
+
+        # _points is every coordinate in (discrete) frequency space indexed in
+        # cannonical order.  Each column gives the coordinates of a different
+        # point.
+        self._points = np.vstack(enumerate_space(self.frequency_extent)).T
+
     def get_atom(self, index):
         # http://en.wikipedia.org/wiki/Discrete_cosine_transform#Multidimensional_DCTs
 
         point = self._points[:,index]
 
         dims = []
-        for i,e in enumerate(self.extent):
+        for i,e in enumerate(self.spatial_extent):
             n = np.atleast_2d(np.arange(e))
-            dims.append(np.cos(np.pi / self.extent[i,0] * (n+0.5) * point[i]).ravel())
+            dims.append(np.cos(np.pi / self.spatial_extent[i,0] * (n+0.5) * point[i]).ravel())
 
         # set up einsum for an outer product
         #
@@ -117,4 +127,12 @@ class DCTDictionary(IndexSpaceDictionary):
         atom_topo = np.einsum(from_idx + "->" + to_idx, *dims)
 
         return atom_topo.ravel()
+
+    @property
+    def input_dim(self):
+        return np.prod(self.spatial_extent)
+
+    @property
+    def size(self):
+        return np.prod(self.frequency_extent)
 
