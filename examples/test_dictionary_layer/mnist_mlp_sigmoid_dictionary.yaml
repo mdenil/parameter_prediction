@@ -11,8 +11,8 @@
                  !obj:parameter_prediction.models.mlp.SubsampledDictionaryLayer {
                      layer_name: 'h0',
                      dim: 100,
-                     dictionary: !obj:parameter_prediction.datasets.dictionary.ExplicitDictionary {
-                        W: !pkl: '/home/mdenil/code/parameter_prediction/scripts/test_dictionary_layer/random_dictionary.joblib'
+                     dictionary: !obj:parameter_prediction.dictionaries.explicit.ExplicitDictionary {
+                        W: !pkl: 'data/random_dictionary.joblib'
                      },
                  },
                  !obj:pylearn2.models.mlp.Sigmoid {

@@ -16,7 +16,7 @@
                                  !obj:parameter_prediction.models.mlp.SubsampledDictionaryLayer {
                                      layer_name: 'h0a0',
                                      dim: 220,
-                                     dictionary: !obj:parameter_prediction.datasets.dictionary.GaussianKernelDictionary &dict {
+                                     dictionary: !obj:parameter_prediction.dictionaries.gaussian.GaussianKernelDictionary &dict {
                                         scale: 1.0,
                                         extent: [28,28],
                                      },

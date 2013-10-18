@@ -16,7 +16,7 @@
                                  !obj:parameter_prediction.models.mlp.SubsampledDictionaryLayer {
                                      layer_name: 'h0a0',
                                      dim: 250,
-                                     dictionary: !obj:parameter_prediction.datasets.dictionary.ExplicitDictionary &dict {
+                                     dictionary: !obj:parameter_prediction.dictionaries.explicit.ExplicitDictionary &dict {
                                         W: !pkl: 'data/random_dictionary.joblib'
                                      },
                                  },
