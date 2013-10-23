@@ -31,6 +31,12 @@ function install_pylearn2 {
     DIR="$1"
 
     cd "$DIR"
+
+    if [ -d "pylearn2" ]; then
+        echo "Existing version of pylearn2 found, removing."
+        rm -rf pylearn2
+    fi
+
     git clone -b parameter_prediction git@bitbucket.org:mdenil/pylearn2.git 
     cd pylearn2
     python setup.py install
