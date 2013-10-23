@@ -12,7 +12,7 @@ function safe_call {
 }
 
 function install_theano {
-    pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
+    pip install --upgrade --no-deps git+git://github.com/mdenil/Theano.git
 }
 
 function install_joblib {
