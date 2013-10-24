@@ -1,4 +1,7 @@
 pp_env/
+include/
+lib/
+share/
 .pkgs/
 *~
 *.bak

@@ -8,6 +8,7 @@ fi
 HERE=$(dirname $(readlink -e $0))
 TOOLPATH="$HERE/tools:$HERE/external/pylearn2/pylearn2/scripts"
 export PYTHONPATH="$HERE"
+export LD_LIBRARY_PATH="$HERE/lib:$LD_LIBRARY_PATH"
 source activate "$HERE/pp_env"
 
 TOOL_NAME="$1";

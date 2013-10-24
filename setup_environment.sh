@@ -6,6 +6,9 @@ ROOT=$(dirname $(readlink -e $0))
 TOTAL_PROCESSORS=$(grep processor /proc/cpuinfo | wc -l)
 MAKE="make -j$TOTAL_PROCESSORS"
 
+export LD_LIBRARY_PATH="$ROOT/lib"
+export CPATH="$ROOT/include"
+
 function safe_call {
     # usage:
     #   safe_call function param1 param2 ...
@@ -44,7 +47,23 @@ function install_pylearn2 {
     python setup.py install
 }
 
+function install_gmp {
+    cd "$1"
+    
+    wget -O- ftp://ftp.gnu.org/gnu/gmp/gmp-5.1.3.tar.bz2 | tar xj
+
+    cd gmp-5.1.3
+
+    ./configure --prefix="$ROOT" --enable-cxx=yes
+
+    $MAKE
+    # make check takes a long time
+    #$MAKE check
+    $MAKE install
+}
+
 function install_libdai {
+    # requires gmp
     cd "$1"
 
     if [ -d "libdai" ]; then
@@ -56,11 +75,18 @@ function install_libdai {
 
     cd libdai
     cp Makefile.LINUX Makefile.conf
+    # ugh...
+    sed -i -e "/^CCINC/ s~$~ -I$ROOT/include~" Makefile.conf
+    sed -i -e "/^CCLIB/ s~$~ -L$ROOT/lib~" Makefile.conf
     $MAKE
+
+    cp lib/libdai.a "$ROOT/lib/."
+    cp -r include/dai/ ../../include/.
 }
 
 function install_daimrf {
-    # must install_libdai first
+    # requires libdai
+
     EXTERNAL="$1"
     ENV="$2"
 
@@ -74,7 +100,9 @@ function install_daimrf {
     git clone https://github.com/amueller/daimrf.git
 
     cd daimrf
-    ln -s "$ROOT/$EXTERNAL/libdai" libdai
+    # ugh...
+    sed -i -e "s~g++~g++ -I$ROOT/include -L$ROOT/lib~" Makefile
+    #ln -s "$ROOT/$EXTERNAL/libdai" libdai
     $MAKE
 
     cp daicrf.so "$ROOT/$ENV/lib/python2.7/site-packages/."
@@ -94,6 +122,7 @@ safe_call install_joblib
 safe_call install_matplotlib
 safe_call install_jinja2
 safe_call install_pylearn2 "$EXTERNAL"
+safe_call install_gmp "$EXTERNAL"
 safe_call install_libdai "$EXTERNAL"
 safe_call install_daimrf "$EXTERNAL" "$ENV"
 
