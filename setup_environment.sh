@@ -110,6 +110,9 @@ function install_daimrf {
     cp daicrf.so "$ROOT/$ENV/lib/python2.7/site-packages/."
 }
 
+function install_nltk {
+    conda install --yes nltk
+}
 
 ENV=pp_env
 EXTERNAL=external
@@ -127,6 +130,7 @@ safe_call install_pylearn2 "$EXTERNAL"
 safe_call install_gmp "$EXTERNAL"
 safe_call install_libdai "$EXTERNAL"
 safe_call install_daimrf "$EXTERNAL" "$ENV"
+safe_call install_nltk
 
 cat <<EOF
 
