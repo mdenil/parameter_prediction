@@ -4,6 +4,9 @@ import theano
 import theano.tensor as T
 from pylearn2.utils import serial
 from parameter_prediction.datasets.timit import TIMIT
+from parameter_prediction.language.model import BigramModel
+import daicrf
+import argparse
 
 
 def load_name_index(file_name):
@@ -120,20 +123,23 @@ def make_folding_matrix(fold_index):
 
 
 if __name__ == "__main__":
-    model_file_name = sys.argv[1]
+    parser = argparse.ArgumentParser(description="Computes predictions of a model on TIMIT using phone folding.")
+    parser.add_argument("model_file_name")
+    args = parser.parse_args()
 
     names = load_name_index("data/timit_phone_index_table.txt")
     folded_indexes = make_folding_index(names)
     F = make_folding_matrix(folded_indexes)
 
-    mlp = serial.load(model_file_name)
+    mlp = serial.load(args.model_file_name)
     X = T.matrix('X')
     fprop = theano.function(
             inputs=[X],
             outputs=mlp.fprop(X))
 
-    timit_test = TIMIT('test')
+    print "Predicting test set"
 
+    timit_test = TIMIT('test')
     Y = fprop(timit_test.X)
     Y_hat = np.equal.outer(
             np.argmax(Y, axis=1),
@@ -150,7 +156,61 @@ if __name__ == "__main__":
     Y_raw_acc = np.all(Y_hat == timit_test.y, axis=1).mean()
     Y_folded_acc = np.all(Y_folded == test_Y_folded, axis=1).mean()
 
-    print "Raw error:    ", 1-Y_raw_acc
-    print "Folded error: ", 1-Y_folded_acc
+    print "Frame classification error       :", 1-Y_raw_acc
+    print "Folded frame classification error:", 1-Y_folded_acc
+
+    print "Building language model"
+    timit_train = TIMIT('test')
+    bigram = BigramModel()
+    bigram.fit(np.argmax(timit_train.y, axis=1), timit_train.sentence_ids)
+
+    print "Decoding predictions ... (this will take a while)"
+    max_sentence_length = np.max(np.diff(np.nonzero(np.diff(timit_test.sentence_ids) != 0))) + 10
+
+    edges = np.arange(max_sentence_length)
+    edges = np.c_[edges[:-1], edges[1:]]
+    pairwise = np.repeat(bigram.Q[np.newaxis,:,:], max_sentence_length, axis=0) + 1e-6
+    
+    def _block_iterator(X, blocks):
+        for i in xrange(blocks.max()):
+            yield X[blocks == i]
+
+    decoded_labels = []
+    for Y_sent in _block_iterator(Y, timit_test.sentence_ids):
+        print Y_sent.sum()
+        #print ".",
+        sentence_length = Y_sent.shape[0]
+        decoded = daicrf.mrf(
+                Y_sent.astype(np.float),
+                edges[:sentence_length-1],
+                pairwise[:sentence_length-1,:,], 
+                verbose=0,
+                alg='jt')
+        decoded_labels.append(decoded)
+        if len(decoded_labels) > 5:
+            break
+    print ""
+
+    Y_decoded = np.equal.outer(
+            np.concatenate(decoded_labels),
+            np.arange(timit_test.y.shape[1]))
+    Y_decoded_folded = np.equal.outer(
+            np.argmax(np.dot(Y_decoded, F), axis=1),
+            np.arange(F.shape[1]))
+
+    print Y_decoded.shape, Y_decoded_folded.shape
+    print timit_test.y.shape, test_Y_folded.shape
+
+    timit_test.y = timit_test.y[:Y_decoded.shape[0]]
+    print (Y_decoded == timit_test.y).all(axis=1)
+            
+    Y_decoded_raw_acc = (Y_decoded == timit_test.y).all(axis=1).mean()
+    Y_decoded_folded_acc = (Y_decoded_folded == test_Y_folded).all(axis=1).mean()
+
+    print "Frame decoding error       :", 1-Y_decoded_raw_acc
+    print "Folded frame decoding error:", 1-Y_decoded_folded_acc
 
 
+
+
+    
