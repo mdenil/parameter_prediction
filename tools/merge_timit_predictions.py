@@ -172,12 +172,12 @@ if __name__ == "__main__":
     pairwise = np.repeat(bigram.Q[np.newaxis,:,:], max_sentence_length, axis=0) + 1e-6
     
     def _block_iterator(X, blocks):
-        for i in xrange(blocks.max()):
+        for i in xrange(blocks.max()+1):
             yield X[blocks == i]
 
     decoded_labels = []
     for Y_sent in _block_iterator(Y, timit_test.sentence_ids):
-        print Y_sent.sum()
+        #print Y_sent.sum()
         #print ".",
         sentence_length = Y_sent.shape[0]
         decoded = daicrf.mrf(
@@ -187,8 +187,8 @@ if __name__ == "__main__":
                 verbose=0,
                 alg='jt')
         decoded_labels.append(decoded)
-        if len(decoded_labels) > 5:
-            break
+        #if len(decoded_labels) > 5:
+        #    break
     print ""
 
     Y_decoded = np.equal.outer(
@@ -198,10 +198,12 @@ if __name__ == "__main__":
             np.argmax(np.dot(Y_decoded, F), axis=1),
             np.arange(F.shape[1]))
 
+    
+    #timit_test.y = timit_test.y[:Y_decoded.shape[0]]
+    #test_Y_folded = test_Y_folded[:Y_decoded_folded.shape[0]]
+
     print Y_decoded.shape, Y_decoded_folded.shape
     print timit_test.y.shape, test_Y_folded.shape
-
-    timit_test.y = timit_test.y[:Y_decoded.shape[0]]
     print (Y_decoded == timit_test.y).all(axis=1)
             
     Y_decoded_raw_acc = (Y_decoded == timit_test.y).all(axis=1).mean()
