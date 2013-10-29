@@ -74,6 +74,8 @@ function install_libdai {
     git clone git://git.tuebingen.mpg.de/libdai.git libdai
 
     cd libdai
+    # HACK OMG
+    git checkout 66778447e394f067b3b48d2feddb5e5578ecb03b
     cp Makefile.LINUX Makefile.conf
     # ugh...
     sed -i -e "/^CCINC/ s~$~ -I$ROOT/include~" Makefile.conf
