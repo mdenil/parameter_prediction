@@ -44,6 +44,30 @@ import parameter_prediction.kernelize.kernel_expander
 
 class LayerFromBlock(mlp.Layer):
     def __init__(self, block, nhid, layer_name):
+        print """
+
+
+
+
+
+        HELLO USER!
+
+
+        YOU ARE USING THE WRONG LayerFromBlock CLASS!
+
+        PLEASE STOP THIS MADNESS!
+
+
+        YOU SHOULD USE THE ONE IN parameter_prediction.models.util INSTEAD!
+
+
+        THANK YOU FOR YOUR COOPERATION!
+
+
+
+
+
+        """
         self.block = block
         self.output_space = VectorSpace(nhid)
         self.layer_name = layer_name
