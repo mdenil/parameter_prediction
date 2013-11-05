@@ -1,0 +1,59 @@
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:parameter_prediction.datasets.timit.TIMIT {
+        which_set: 'train',
+    },
+
+    model: !obj:pylearn2.models.mlp.MLP {
+        nvis: 429,
+        layers: [
+            !obj:pylearn2.models.mlp.PretrainedLayer {
+                layer_name: "ae_1",
+                freeze_params: False,
+                layer_content: !pkl: "examples/mlp_ae/timit_mlp_ae_layer1.pkl",
+            },
+            !obj:pylearn2.models.mlp.PretrainedLayer {
+                layer_name: "ae_2",
+                freeze_params: False,
+                layer_content: !pkl: "examples/mlp_ae/timit_mlp_ae_layer2.pkl",
+            },
+            !obj:pylearn2.models.mlp.Softmax {
+                n_classes: 183,
+                irange: 0.02,
+                layer_name: "y",
+            },
+        ],
+    },
+
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        batch_size: 100,
+        learning_rate: 0.1,
+        init_momentum: 0.7,
+        monitoring_dataset: {
+            'test': !obj:parameter_prediction.datasets.timit.TIMIT {
+                which_set: 'test',
+            },
+        },
+
+        cost: !obj:pylearn2.costs.mlp.Default {
+        },
+
+        termination_criterion: &quick_termination !obj:pylearn2.termination_criteria.EpochCounter {
+            max_epochs: 100,
+        },
+
+        update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
+            decay_factor: 1.00004,
+            min_lr: .000001
+        }
+    },
+
+    extensions: [
+        !obj:pylearn2.training_algorithms.sgd.MomentumAdjustor {
+            start: 1,
+            saturate: 250,
+            final_momentum: .7
+        }
+    ],
+    save_path: "${PYLEARN2_TRAIN_FILE_FULL_STEM}.pkl",
+    save_freq: 1
+}
