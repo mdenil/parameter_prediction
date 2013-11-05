@@ -3,6 +3,7 @@ import theano.tensor as T
 from pylearn2.base import Block
 from pylearn2.models import Model
 from pylearn2.space import VectorSpace
+from pylearn2.utils import sharedX
 
 def _identity(x):
     return x
@@ -38,6 +39,9 @@ class Autoencoder(Block, Model):
         self.input_space = VectorSpace(nvis)
         self.output_space = VectorSpace(layer.dim)
 
+        self.vb = sharedX(np.zeros((nvis,)))
+        self.vb.name = layer.layer_name + "_vb(ae)"
+
         self.act_dec = DECODER_FUNCTION_MAP[act_dec]
 
         # self is not really an mlp, but the only thing layer.mlp is used for
@@ -55,7 +59,7 @@ class Autoencoder(Block, Model):
         return self.layer.fprop(inputs)
 
     def decode(self, hiddens):
-        return self.act_dec(self.layer.transformer.lmul_T(hiddens))
+        return self.act_dec(self.layer.transformer.lmul_T(hiddens) + self.vb)
 
     def reconstruct(self, inputs):
         return self.decode(self.encode(inputs))
@@ -68,13 +72,26 @@ class Autoencoder(Block, Model):
         return ['v', 'h']
 
     def get_params(self):
-        return self.layer.get_params()
+        return self.layer.get_params() + [self.vb]
+
+    @property
+    def layers(self):
+        return [self.layer]
 
     def __call__(self, inputs):
         return self.encode(inputs)
+
+    def get_weight_decay(self, coeff):
+        return self.layer.get_weight_decay(coeff) + coeff * T.sqr(self.vb).sum()
+
+    def get_l1_weight_decay(self, coeff):
+        return self.layer.get_l1_weight_decay(coeff) + coeff * abs(self.vb).sum()
 
     # Use version defined in Model, rather than Block (which raises
     # NotImplementedError).
     get_input_space = Model.get_input_space
     get_output_space = Model.get_output_space
 
+class AutoencoderLayerExtractor(object):
+    def __new__(cls, autoencoder):
+        return autoencoder.layer
