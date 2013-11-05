@@ -3,13 +3,60 @@ from pylearn2.models import mlp
 from pylearn2.space import VectorSpace
 from pylearn2.utils import sharedX
 from pylearn2.linear.matrixmul import MatrixMul
+from collections import OrderedDict
 
-class PureLinear(mlp.Linear):
-    def cost(self, *args, **kwargs):
-        raise NotImplementedError()
+#class PureLinear(mlp.Linear):
+#    def cost(self, *args, **kwargs):
+#        raise NotImplementedError()
+#
+#    def fprop(self, state_below):
+#        return self._linear_part(state_below)
 
-    def fprop(self, state_below):
-        return self._linear_part(state_below)
+#class AutoencoderLayer(mlp.Linear):
+#    def set_input_space(self, space):
+#        self.input_space = space
+#        self.output_space = space
+#
+#        if isinstance(space, VectorSpace):
+#            self.requires_reformat = False
+#            self.input_dim = space.dim
+#        else:
+#            self.requires_reformat = True
+#            self.input_dim = space.get_total_dimension()
+#            self.desired_space = VectorSpace(self.input_dim)
+#
+#        rng = self.mlp.rng
+#        W = rng.uniform(-self.irange, self.irange, (self.input_dim, self.dim))
+#        W = sharedX(W)
+#        W.name = self.layer_name + "_W"
+#
+#        self.transformer = MatrixMul(W)
+#
+#    def fprop(self, state_below):
+#        return self.reconstruct(state_below)
+#
+#    def upward_pass(self, state_below):
+#        return T.nnet.sigmoid(self.transformer.lmul(state_below) + self.b)
+#
+#    def downward_pass(self, state_above):
+#        return self.transformer.lmul_T(state_above)
+#
+#    def reconstruct(self, state_below):
+#        return self.downward_pass(self.upward_pass(state_below))
+#
+#class PretrainedAutoencoderLayer(mlp.PretrainedLayer):
+#    def get_output_space(self):
+#        return VectorSpace(self.layer_content.dim)
+
+class PretrainedLayer(mlp.PretrainedLayer):
+    def fprop(self, *args, **kwargs):
+        return self.layer_content.fprop(*args, **kwargs)
+
+    def get_weight_decay(self, coeff):
+        return self.layer_content.get_weight_decay(coeff)
+
+    def get_l1_weight_decay(self, coeff):
+        return self.layer_content.get_weight_decay(coeff)
 
 class SubsampledDictionaryLayer(mlp.Layer):
     def __init__(self, dim, layer_name, dictionary):
