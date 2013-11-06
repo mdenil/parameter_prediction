@@ -1,6 +1,7 @@
 import numpy as np
 
 from parameter_prediction.dictionaries.explicit import ExplicitDictionary
+from parameter_prediction.dictionaries.utils import *
 
 class AutoencoderDictionary(ExplicitDictionary):
     def __init__(self, ae_model):
@@ -30,15 +31,40 @@ class CovarianceDictionary(ExplicitDictionary):
     """
     def __init__(self, inputs):
         """
-        inputs : Dataset or TransformerDataset.
+        inputs : an instance of Dataset or TransformerDataset.
         """
-        self.W = np.cov(self.get_data(inputs).T)
+        self.W = np.cov(get_data(inputs).T)
 
-    def get_data(self, inputs):
-        from pylearn2.datasets.transformer_dataset import TransformerDataset
-        if isinstance(inputs, TransformerDataset):
-            X = inputs.transformer.perform(inputs.raw)
+class KmeansDictionary(ExplicitDictionary):
+    """
+    Creates a dictionary using kmeans centers.
+    """
+    def __init__(self, inputs, kmeans_opts=None, whitening_opts=None):
+        """
+        inputs: an instance of Dataset or TransformerDataset.
+        k: number of kmeans centers.
+        whitening: if true the input data is whitened before finding running
+            the kmeans.
+        """
+        X = get_data(inputs)
+        if whitening_opts != None:
+            [X_white, _, invV, m] = whiten(X, **whitening_opts)
+            W_white = kmeans(X_white, **kmeans_opts)
+            self.W = np.dot(W_white, invV) + m
         else:
-            X = inputs.X
-        return X
+            self.W = kmeans(X, **kmeans_opts)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
