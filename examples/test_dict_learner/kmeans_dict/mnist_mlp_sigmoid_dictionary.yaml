@@ -19,10 +19,11 @@
                             n_iterations: 10,
                             verbose: True,
                         },
-                       # whitening_opts: {
-                       #     per_keep: 1.1,
-                       #     method: 'pca',
-                       # },
+                        whitening_opts: {
+                            per_keep: 1.1,
+                            method: 'pca',
+                            force_svd: True,
+                        },
                      },
                  },
                  !obj:pylearn2.models.mlp.Sigmoid {
