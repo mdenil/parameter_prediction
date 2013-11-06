@@ -48,6 +48,11 @@ from collections import OrderedDict
 #    def get_output_space(self):
 #        return VectorSpace(self.layer_content.dim)
 
+class CompositeLayer(mlp.CompositeLayer):
+    @property
+    def dim(self):
+        return sum(layer.dim for layer in self.layers)
+
 class PretrainedLayer(mlp.PretrainedLayer):
     def fprop(self, *args, **kwargs):
         return self.layer_content.fprop(*args, **kwargs)
