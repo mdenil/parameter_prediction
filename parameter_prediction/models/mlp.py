@@ -2,60 +2,54 @@ import theano.tensor as T
 from pylearn2.models import mlp
 from pylearn2.space import VectorSpace
 from pylearn2.utils import sharedX
+from pylearn2.utils import safe_zip
 from pylearn2.linear.matrixmul import MatrixMul
 from collections import OrderedDict
 
-#class PureLinear(mlp.Linear):
-#    def cost(self, *args, **kwargs):
-#        raise NotImplementedError()
-#
-#    def fprop(self, state_below):
-#        return self._linear_part(state_below)
+class MLP(mlp.MLP):
+    def inv_prop(self, state_above):
+        self.layers[-1].output_space.validate(state_above)
 
-#class AutoencoderLayer(mlp.Linear):
-#    def set_input_space(self, space):
-#        self.input_space = space
-#        self.output_space = space
-#
-#        if isinstance(space, VectorSpace):
-#            self.requires_reformat = False
-#            self.input_dim = space.dim
-#        else:
-#            self.requires_reformat = True
-#            self.input_dim = space.get_total_dimension()
-#            self.desired_space = VectorSpace(self.input_dim)
-#
-#        rng = self.mlp.rng
-#        W = rng.uniform(-self.irange, self.irange, (self.input_dim, self.dim))
-#        W = sharedX(W)
-#        W.name = self.layer_name + "_W"
-#
-#        self.transformer = MatrixMul(W)
-#
-#    def fprop(self, state_below):
-#        return self.reconstruct(state_below)
-#
-#    def upward_pass(self, state_below):
-#        return T.nnet.sigmoid(self.transformer.lmul(state_below) + self.b)
-#
-#    def downward_pass(self, state_above):
-#        return self.transformer.lmul_T(state_above)
-#
-#    def reconstruct(self, state_below):
-#        return self.downward_pass(self.upward_pass(state_below))
-#
-#class PretrainedAutoencoderLayer(mlp.PretrainedLayer):
-#    def get_output_space(self):
-#        return VectorSpace(self.layer_content.dim)
+        state_from_above = self.layers[-1].inv_prop(state_above)
+        layer_above = self.layers[-1]
+        for layer in reversed(self.layers[:-1]):
+            desired_space = layer_above.input_space
+
+            state_from_above = layer.inv_prop(
+                    desired_space.format_as(state_from_above, layer.output_space))
+
+            layer_above = layer
+
+        return state_from_above
+
+    @property
+    def output_space(self):
+        return self.layers[-1].output_space
 
 class CompositeLayer(mlp.CompositeLayer):
     @property
     def dim(self):
         return sum(layer.dim for layer in self.layers)
 
+    def get_input_space(self):
+        input_space = self.layers[0].get_input_space()
+        assert all(input_space == layer.get_input_space() for layer in self.layers)
+        return input_space
+
+    def inv_prop(self, state_above):
+        if not isinstance(state_above, tuple):
+            expected_space = VectorSpace(self.output_space.get_total_dimension())
+            state_above = expected_space.format_as(state_above, self.output_space)
+
+        self.output_space.validate(state_above)
+        return tuple(layer.inv_prop(state) for layer,state in safe_zip(self.layers, state_above))
+
 class PretrainedLayer(mlp.PretrainedLayer):
     def fprop(self, *args, **kwargs):
         return self.layer_content.fprop(*args, **kwargs)
+
+    def inv_prop(self, state_above):
+        return self.layer_content.inv_prop(state_above)
 
     def get_weight_decay(self, coeff):
         return self.layer_content.get_weight_decay(coeff)
@@ -63,7 +57,18 @@ class PretrainedLayer(mlp.PretrainedLayer):
     def get_l1_weight_decay(self, coeff):
         return self.layer_content.get_weight_decay(coeff)
 
-class SubsampledDictionaryLayer(mlp.Layer):
+class ReversableLayerMixin(object):
+    def inv_prop(self, state_above):
+        self.output_space.validate(state_above)
+        return self.transformer.lmul_T(state_above)
+
+class Sigmoid(mlp.Sigmoid, ReversableLayerMixin):
+    pass
+
+class RectifiedLinear(mlp.RectifiedLinear, ReversableLayerMixin):
+    pass
+
+class SubsampledDictionaryLayer(mlp.Layer, ReversableLayerMixin):
     def __init__(self, dim, layer_name, dictionary):
         self.dim = dim
         self.layer_name = layer_name
@@ -113,7 +118,6 @@ class SubsampledDictionaryLayer(mlp.Layer):
     # This is a static layer, there is no cost, no parameters, no updates, etc, etc
     def get_params(self):
         return []
-        #return self.transformer.get_params()
 
     def cost(self, Y, Y_hat):
         return 0.0

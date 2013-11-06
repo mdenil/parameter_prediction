@@ -36,21 +36,24 @@ class Autoencoder(Block, Model):
     def __init__(self, nvis, layer, act_dec='linear', seed=None):
         super(Autoencoder, self).__init__()
 
-        self.input_space = VectorSpace(nvis)
-        self.output_space = VectorSpace(layer.dim)
-
-        self.vb = sharedX(np.zeros((nvis,)))
-        self.vb.name = layer.layer_name + "_vb(ae)"
 
         self.act_dec = DECODER_FUNCTION_MAP[act_dec]
 
-        # self is not really an mlp, but the only thing layer.mlp is used for
-        # internally is getting access to rng, which we have
+        # self is not really an mlp, but the only thing layer.mlp is used 
+        # in set_input_space to get access to rng, which we have
         self.rng = np.random.RandomState(seed)
         layer.mlp = self
 
-        layer.set_input_space(self.input_space)
+        layer.set_input_space(VectorSpace(nvis))
         self.layer = layer
+
+    @property
+    def output_space(self):
+        return self.layer.get_output_space()
+
+    @property
+    def input_space(self):
+        return self.layer.get_input_space()
 
     def upward_pass(self, inputs):
         return self.encode(inputs)
@@ -59,7 +62,7 @@ class Autoencoder(Block, Model):
         return self.layer.fprop(inputs)
 
     def decode(self, hiddens):
-        return self.act_dec(self.layer.transformer.lmul_T(hiddens) + self.vb)
+        return self.act_dec(self.layer.inv_prop(hiddens))
 
     def reconstruct(self, inputs):
         return self.decode(self.encode(inputs))
@@ -72,7 +75,7 @@ class Autoencoder(Block, Model):
         return ['v', 'h']
 
     def get_params(self):
-        return self.layer.get_params() + [self.vb]
+        return self.layer.get_params()
 
     @property
     def layers(self):
@@ -82,13 +85,11 @@ class Autoencoder(Block, Model):
         return self.encode(inputs)
 
     def get_weight_decay(self, coeff):
-        return self.layer.get_weight_decay(coeff) + coeff * T.sqr(self.vb).sum()
+        return self.layer.get_weight_decay(coeff)
 
     def get_l1_weight_decay(self, coeff):
-        return self.layer.get_l1_weight_decay(coeff) + coeff * abs(self.vb).sum()
+        return self.layer.get_l1_weight_decay(coeff)
 
-    # Use version defined in Model, rather than Block (which raises
-    # NotImplementedError).
     get_input_space = Model.get_input_space
     get_output_space = Model.get_output_space
 
