@@ -1,16 +1,16 @@
 !obj:pylearn2.train.Train {
-    dataset: &train1 !obj:parameter_prediction.datasets.timit.TIMIT {
+    dataset: &train !obj:parameter_prediction.datasets.timit.TIMIT {
         which_set: 'train',
     },
 
     model: !obj:parameter_prediction.models.autoencoder.Autoencoder {
         nvis: 429,
         act_dec: 'sigmoid',
-        layer: !obj:pylearn2.models.mlp.Sigmoid {
+        layer: !obj:parameter_prediction.models.mlp.Sigmoid {
             layer_name: 'h0',
-            dim: 2048,
-            irange: 0.001,
-            max_col_norm: 1.9365,
+            dim: 1024,
+            irange: 0.0005,
+            #max_col_norm: 1.9365,
         },
     },
 
@@ -19,14 +19,7 @@
         learning_rate: 0.1,
         init_momentum: 0.7,
         monitoring_dataset: {
-            #'train' : *train1,
-            #'valid' : &valid1 !obj:pylearn2.datasets.mnist.MNIST {
-            #    which_set: 'train',
-            #    one_hot: 1,
-            #    start: 50000,
-            #    stop:  60000
-            #},
-            'test': &test1 !obj:parameter_prediction.datasets.timit.TIMIT {
+            'test': &test !obj:parameter_prediction.datasets.timit.TIMIT {
                 which_set: 'test',
             },
         },
@@ -35,7 +28,7 @@
         },
 
         termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
-            max_epochs: 5,
+            max_epochs: 20,
         },
 
         update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
@@ -51,6 +44,6 @@
             final_momentum: .7
         }
     ],
-    save_path: "${PYLEARN2_TRAIN_FILE_FULL_STEM}.pkl",
+    save_path: "models/${PYLEARN2_TRAIN_FILE_STEM}.pkl",
     save_freq: 1
 }

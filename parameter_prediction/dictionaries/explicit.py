@@ -39,4 +39,7 @@ class ExplicitDictionary(object):
     def size(self):
         return self.W.shape[0]
 
-
+class DictionaryFromPylearn2Autoencoder(object):
+    def __new__(_, autoencoder):
+        W = autoencoder.weights.get_value().T
+        return ExplicitDictionary(W)

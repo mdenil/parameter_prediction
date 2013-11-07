@@ -3,18 +3,22 @@
         which_set: 'train',
     },
 
-    model: !obj:pylearn2.models.mlp.MLP {
+    model: !obj:parameter_prediction.models.mlp.MLP {
         nvis: 429,
         layers: [
-            !obj:pylearn2.models.mlp.PretrainedLayer {
+            !obj:parameter_prediction.models.mlp.PretrainedLayer {
                 layer_name: "ae_1",
                 freeze_params: False,
-                layer_content: !pkl: "examples/mlp_ae/timit_mlp_ae_layer1.pkl",
+                layer_content: !obj:parameter_prediction.models.autoencoder.AutoencoderLayerExtractor {
+                    autoencoder: !pkl: "models/timit_mlp_ae_layer1.pkl",
+                },
             },
-            !obj:pylearn2.models.mlp.PretrainedLayer {
+            !obj:parameter_prediction.models.mlp.PretrainedLayer {
                 layer_name: "ae_2",
                 freeze_params: False,
-                layer_content: !pkl: "examples/mlp_ae/timit_mlp_ae_layer2.pkl",
+                layer_content: !obj:parameter_prediction.models.autoencoder.AutoencoderLayerExtractor {
+                    autoencoder: !pkl: "models/timit_mlp_ae_layer2.pkl",
+                },
             },
             !obj:pylearn2.models.mlp.Softmax {
                 n_classes: 183,
@@ -28,6 +32,9 @@
         batch_size: 100,
         learning_rate: 0.1,
         init_momentum: 0.7,
+        #learning_rule: !obj:pylearn2.training_algorithms.learning_rule.Momentum {
+        #    init_momentum: 0.0,
+        #},
         monitoring_dataset: {
             'test': !obj:parameter_prediction.datasets.timit.TIMIT {
                 which_set: 'test',
@@ -36,6 +43,17 @@
 
         cost: !obj:pylearn2.costs.mlp.Default {
         },
+
+#        cost: !obj:pylearn2.costs.cost.SumOfCosts {
+#            costs: [
+#                !obj:pylearn2.costs.mlp.Default {
+#                },
+#                !obj:pylearn2.costs.mlp.WeightDecay {
+#                    coeffs: [ 0.0005, 0.0005, 0.0005 ],
+#                },
+#            ],
+#        },
+
 
         termination_criterion: &quick_termination !obj:pylearn2.termination_criteria.EpochCounter {
             max_epochs: 100,
@@ -54,6 +72,6 @@
             final_momentum: .7
         }
     ],
-    save_path: "${PYLEARN2_TRAIN_FILE_FULL_STEM}.pkl",
+    save_path: "models/${PYLEARN2_TRAIN_FILE_STEM}.pkl",
     save_freq: 1
 }
