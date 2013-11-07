@@ -16,7 +16,7 @@ def get_data(inputs):
     from pylearn2.datasets.transformer_dataset import TransformerDataset
     
     if isinstance(inputs, TransformerDataset):
-        X = inputs.transformer.perform(inputs.raw)
+        X = inputs.get_batch_design(batch_size=inputs.raw.num_examples, include_labels=False)
     else:
         assert isinstance(inputs, Dataset)
         X = inputs.X
