@@ -26,6 +26,21 @@ class MLP(mlp.MLP):
     def output_space(self):
         return self.layers[-1].output_space
 
+class VectorSpaceConverter(mlp.Layer):
+    def __init__(self, layer_name):
+        self.layer_name = layer_name
+        self._params = []
+
+    def set_input_space(self, space):
+        self.input_space = space
+        self.output_space = VectorSpace(space.get_total_dimension())
+
+    def fprop(self, state_below):
+        return self.input_space.format_as(state_below, self.output_space)
+
+    def inv_prop(self, state_above):
+        return self.output_space.format_as(state_above, self.input_space)
+
 class CompositeLayer(mlp.CompositeLayer):
     @property
     def dim(self):

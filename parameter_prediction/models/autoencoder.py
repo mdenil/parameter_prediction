@@ -67,6 +67,13 @@ class Autoencoder(Block, Model):
     def reconstruct(self, inputs):
         return self.decode(self.encode(inputs))
 
+    def perform(self, X):
+        # work around some awkwardness with blocks
+        rval = Block.perform(self, X)
+        if isinstance(rval, list):
+            rval = tuple(rval)
+        return rval
+
     def get_weights(self, borrow=False):
         W, = self.layer.transformer.get_params()
         return W.get_value(borrow=borrow)
