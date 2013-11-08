@@ -34,6 +34,10 @@ function install_jinja2 {
     conda install --yes jinja2
 }
 
+function install_pandas {
+    conda install --yes pandas
+}
+
 function install_pylearn2 {
     cd "$1"
 
@@ -126,6 +130,7 @@ safe_call install_theano
 safe_call install_joblib
 safe_call install_matplotlib
 safe_call install_jinja2
+safe_call install_pandas
 safe_call install_pylearn2 "$EXTERNAL"
 safe_call install_gmp "$EXTERNAL"
 safe_call install_libdai "$EXTERNAL"
