@@ -1,0 +1,99 @@
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:parameter_prediction.datasets.timit.TIMIT {
+        which_set: 'train',
+    },
+
+    model: !obj:parameter_prediction.models.autoencoder.Autoencoder {
+        nvis: 429,
+        act_dec: 'sigmoid',
+        layer: !obj:parameter_prediction.models.mlp.MLP {
+            layers: [
+                !obj:parameter_prediction.models.mlp.CompositeLayer {
+                    layer_name: 'h0',
+                    layers: [
+                        
+                        
+
+                        !obj:parameter_prediction.models.mlp.MLP {
+                            layers: [
+                                !obj:parameter_prediction.models.mlp.SubsampledDictionaryLayer {
+                                    layer_name: 'h0-0-a',
+                                    dim: 110,
+                                    dictionary: &dict !obj:parameter_prediction.dictionaries.learned.AutoencoderDictionary {
+                                        ae_model: !pkl: 'models/dicts/learn_dict_layer1.pkl'
+                                    }
+                                },
+                                !obj:parameter_prediction.models.mlp.Sigmoid {
+                                    layer_name: 'h0-0-b',
+                                    dim: 512,
+                                    irange: 0.1,
+                                    max_col_norm: 1.9365,
+                                },
+                            ],
+                        },
+
+                    
+                        
+
+                        !obj:parameter_prediction.models.mlp.MLP {
+                            layers: [
+                                !obj:parameter_prediction.models.mlp.SubsampledDictionaryLayer {
+                                    layer_name: 'h0-1-a',
+                                    dim: 110,
+                                    dictionary: *dict 
+                                },
+                                !obj:parameter_prediction.models.mlp.Sigmoid {
+                                    layer_name: 'h0-1-b',
+                                    dim: 512,
+                                    irange: 0.1,
+                                    max_col_norm: 1.9365,
+                                },
+                            ],
+                        },
+
+                    
+                    ],
+                },
+
+                !obj:parameter_prediction.models.mlp.VectorSpaceConverter {
+                    layer_name: "space_converter",
+                },
+            ],
+        },
+    },
+
+
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        batch_size: 100,
+        learning_rate: 0.1,
+        init_momentum: 0.7,
+        monitoring_dataset: {
+            #'train' : *train,
+            'test': &test !obj:parameter_prediction.datasets.timit.TIMIT {
+                which_set: 'test',
+            },
+        },
+
+        cost: !obj:pylearn2.costs.autoencoder.MeanSquaredReconstructionError {
+        },
+
+        termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
+            max_epochs: 20,
+        },
+
+        update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
+            decay_factor: 1.00004,
+            min_lr: .000001
+        }
+    },  
+
+    extensions: [
+        !obj:pylearn2.training_algorithms.sgd.MomentumAdjustor {
+            start: 1,
+            saturate: 250,
+            final_momentum: .7
+        }
+    ],  
+    save_path: "models/${PYLEARN2_TRAIN_FILE_STEM}.pkl",
+    save_freq: 1
+}

@@ -1,0 +1,54 @@
+!obj:pylearn2.train.Train {
+    dataset: &train1 !obj:parameter_prediction.datasets.timit.TIMIT {
+        which_set: 'train',
+    },
+
+    model: !obj:pylearn2.models.autoencoder.Autoencoder {
+        nvis: 429,
+        nhid: 1024,
+        tied_weights: True,
+        act_enc: 'sigmoid',
+        act_dec: 'sigmoid',
+        irange: 0.001,
+    },
+
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        batch_size: 100,
+        learning_rate: 0.1,
+        init_momentum: 0.7,
+        monitoring_dataset: {
+            #'train' : *train1,
+            #'valid' : &valid1 !obj:pylearn2.datasets.mnist.MNIST {
+            #    which_set: 'train',
+            #    one_hot: 1,
+            #    start: 50000,
+            #    stop:  60000
+            #},
+            'test': &test1 !obj:parameter_prediction.datasets.timit.TIMIT {
+                which_set: 'test',
+            },
+        },
+
+        cost: !obj:pylearn2.costs.autoencoder.MeanSquaredReconstructionError {
+        },
+
+        termination_criterion: &quick_termination !obj:pylearn2.termination_criteria.EpochCounter {
+            max_epochs: 20,
+        },
+
+        update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
+            decay_factor: 1.00004,
+            min_lr: .000001
+        }
+    },
+
+    extensions: [
+        !obj:pylearn2.training_algorithms.sgd.MomentumAdjustor {
+            start: 1,
+            saturate: 250,
+            final_momentum: .7
+        }
+    ],
+    save_path: "models/dicts/${PYLEARN2_TRAIN_FILE_STEM}.pkl",
+    save_freq: 1
+}
