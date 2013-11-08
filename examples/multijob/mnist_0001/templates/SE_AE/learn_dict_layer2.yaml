@@ -1,0 +1,53 @@
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:pylearn2.datasets.transformer_dataset.TransformerDataset {
+        raw: !obj:pylearn2.datasets.mnist.MNIST {
+            which_set: 'train',
+            one_hot: 1,
+        },
+        transformer: &transformer !pkl: "{{job_dir}}/models/pretrain_layer1.pkl",
+    },
+
+    model: !obj:pylearn2.models.autoencoder.Autoencoder {
+                nvis: {{n_vis}},
+                nhid: {{n_atoms}},
+                tied_weights: True,
+                act_enc: 'sigmoid',
+                act_dec: 'sigmoid',
+                irange: 0.001,
+            },
+
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        batch_size: 100,
+        learning_rate: .1,
+        init_momentum: .5,
+        monitoring_dataset:
+            {
+                'train' : *train,
+                'test': &test !obj:pylearn2.datasets.transformer_dataset.TransformerDataset {
+                     raw: !obj:pylearn2.datasets.mnist.MNIST {
+                         which_set: 'test',
+                         one_hot: 1,
+                     },
+                     transformer: *transformer,
+                 },
+           },
+        cost: !obj:pylearn2.costs.autoencoder.MeanSquaredReconstructionError {
+           },
+        termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
+            max_epochs: {{n_epochs}},
+        },
+        update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
+            decay_factor: 1.000004,
+            min_lr: .000001
+        }
+    },
+    extensions: [
+       !obj:pylearn2.training_algorithms.sgd.MomentumAdjustor {
+            start: 1,
+            saturate: 250,
+            final_momentum: .7
+        }
+    ],
+    save_path: "{{job_dir}}/dicts/${PYLEARN2_TRAIN_FILE_STEM}.pkl",
+    save_freq: 1
+}

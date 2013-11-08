@@ -1,0 +1,79 @@
+!obj:pylearn2.train.Train {
+    dataset: &train !obj:pylearn2.datasets.mnist.MNIST {
+        which_set: 'train',
+        one_hot: 1,
+    },
+
+    model: !obj:parameter_prediction.models.mlp.MLP {
+        nvis: {{n_vis}},
+        layers: [
+
+            !obj:parameter_prediction.models.mlp.PretrainedLayer {
+                layer_name: "pretrained_1",
+                freeze_params: False,
+                layer_content: !obj:parameter_prediction.models.autoencoder.AutoencoderLayerExtractor {
+                    autoencoder: !pkl: "{{job_dir}}/models/pretrain_layer1.pkl",
+                },
+            },
+
+            !obj:parameter_prediction.models.mlp.PretrainedLayer {
+                layer_name: "pretrained_2",
+                freeze_params: False,
+                layer_content: !obj:parameter_prediction.models.autoencoder.AutoencoderLayerExtractor {
+                    autoencoder: !pkl: "{{job_dir}}/models/pretrain_layer2.pkl",
+                },
+            },
+
+            !obj:pylearn2.models.mlp.Softmax {
+                layer_name: "y",
+                n_classes: 10,
+                irange: 0.02,
+            },
+
+        ],
+    },
+
+    algorithm: !obj:pylearn2.training_algorithms.sgd.SGD {
+        batch_size: 100,
+        learning_rate: 0.01,
+        init_momentum: 0.7,
+        monitoring_dataset: {
+            'train' : *train,
+            'test': &test !obj:pylearn2.datasets.mnist.MNIST {
+                which_set: 'test',
+                one_hot: 1,
+            },
+        },
+
+        cost: !obj:pylearn2.costs.cost.SumOfCosts {
+            costs: [
+                !obj:pylearn2.costs.mlp.Default {
+                },
+                !obj:pylearn2.costs.mlp.WeightDecay {
+                    coeffs: [ 0.00005, 0.00005, 0.00005 ],
+                },
+            ],
+        },
+
+        termination_criterion: !obj:pylearn2.termination_criteria.EpochCounter {
+            max_epochs: {{n_epochs}},
+        },
+
+        update_callbacks: !obj:pylearn2.training_algorithms.sgd.ExponentialDecay {
+            decay_factor: 1.00004,
+            min_lr: .000001
+        }
+    },  
+
+    extensions: [
+        !obj:pylearn2.training_algorithms.sgd.MomentumAdjustor {
+            start: 100,
+            saturate: 250,
+            final_momentum: .7
+        }
+    ],  
+    save_path: "{{job_dir}}/models/${PYLEARN2_TRAIN_FILE_STEM}.pkl",
+    save_freq: 1
+}
+
+
