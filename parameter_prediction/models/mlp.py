@@ -26,6 +26,12 @@ class MLP(mlp.MLP):
     def output_space(self):
         return self.layers[-1].output_space
 
+    def get_weight_decay(self, coeff):
+        return sum(layer.get_weight_decay(coeff) for layer in self.layers)
+
+    def get_l1_weight_decay(self, coeff):
+        return sum(layer.get_l1_weight_decay(coeff) for layer in self.layers)
+
 class VectorSpaceConverter(mlp.Layer):
     def __init__(self, layer_name):
         self.layer_name = layer_name
@@ -40,6 +46,12 @@ class VectorSpaceConverter(mlp.Layer):
 
     def inv_prop(self, state_above):
         return self.output_space.format_as(state_above, self.input_space)
+
+    def get_weight_decay(self, coeff):
+        return 0.0
+
+    def get_l1_weight_decay(self, coeff):
+        return 0.0
 
 class CompositeLayer(mlp.CompositeLayer):
     @property
