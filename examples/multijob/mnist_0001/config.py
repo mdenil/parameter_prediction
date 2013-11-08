@@ -10,8 +10,11 @@ template_dir = "templates"
 global_template_params = {
     }
 
-def _n_atoms_per_column(n_hid, n_columns, prop):
-    return int(_n_hid_per_column(n_hid, n_columns) * prop)
+#def _n_atoms_per_column(n_hid, n_columns, prop):
+#    return int(_n_hid_per_column(n_hid, n_columns) * prop)
+
+def _n_atoms_per_column(n_vis, prop):
+    return int(n_vis * prop)
 
 def _n_hid_per_column(n_hid, n_columns):
     return int(n_hid / n_columns)
@@ -39,7 +42,7 @@ def get_job(
                     "n_vis": 784,
                     "columns": [
                         {
-                            "n_atoms": _n_atoms_per_column(n_hid, n_columns, prop),
+                            "n_atoms": _n_atoms_per_column(784, prop),
                             "n_hid": _n_hid_per_column(n_hid, n_columns)
                         },
                     ] * n_columns,
@@ -66,7 +69,7 @@ def get_job(
                     "n_vis": _n_hid_total(n_hid, n_columns),
                     "columns": [
                         {
-                            "n_atoms": _n_atoms_per_column(n_hid, n_columns, prop),
+                            "n_atoms": _n_atoms_per_column(_n_hid_total(n_hid, n_columns), prop),
                             "n_hid": _n_hid_per_column(n_hid, n_columns)
                         },
                     ] * n_columns,

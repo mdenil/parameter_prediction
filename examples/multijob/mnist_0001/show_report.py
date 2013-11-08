@@ -82,7 +82,7 @@ def report(df, x, loc, ylim, line_groups, figure_groups):
 if __name__ == "__main__":
     df = pd.read_csv("report.csv")
 
-    zoom = [0, 0.2]
+    zoom = [0, 1]
     
     report(df,
         loc="figures",
