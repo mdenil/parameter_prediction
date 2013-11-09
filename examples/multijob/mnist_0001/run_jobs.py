@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # set up parameters for different jobs
     n_epochs = [50,50,100]
     n_epochs_dict = 50
-    n_atoms_dict = 500
+    n_atoms_dict = 1000
     n_hid = 500
 
     n_columns = [1, 5, 10]
@@ -55,6 +55,6 @@ if __name__ == "__main__":
     # launch each task as a job
     Parallel(n_jobs=n_jobs)(
         # change LocalTask to ClusterTask to submit jobs to the cluster
-        delayed(run_job)(job_id, [task], task_factory=job_manager.ClusterTask)
+        delayed(run_job)(job_id, [task], task_factory=job_manager.LocalTask)
         for job_id, task in enumerate(tasks))
 
