@@ -34,7 +34,8 @@ if __name__ == "__main__":
     n_hid = 500
 
     n_columns = [1, 5, 10]
-    n_points_prop = [p for p in map(float, np.logspace(np.log10(20.0/784), np.log10(1.0), 10))]
+    #n_points_prop = [p for p in map(float, np.logspace(np.log10(20.0/784), np.log10(1.0), 10))]
+    n_points_prop = [p for p in map(float, np.linspace(20.0/784, 1.0, 10))]
 
     # generate a list of tasks
     # use itertools.product(...) to generate grids of parameters
@@ -54,6 +55,6 @@ if __name__ == "__main__":
     # launch each task as a job
     Parallel(n_jobs=n_jobs)(
         # change LocalTask to ClusterTask to submit jobs to the cluster
-        delayed(run_job)(job_id, [task], task_factory=job_manager.LocalTask)
+        delayed(run_job)(job_id, [task], task_factory=job_manager.ClusterTask)
         for job_id, task in enumerate(tasks))
 
