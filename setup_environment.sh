@@ -19,7 +19,7 @@ function safe_call {
 }
 
 function install_theano {
-    pip install --upgrade --no-deps git+git://github.com/mdenil/Theano.git
+    pip install --upgrade --no-deps git+git://github.com/mdenil/Theano.git@cublas-config-option
 }
 
 function install_joblib {
