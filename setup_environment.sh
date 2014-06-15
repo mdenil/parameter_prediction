@@ -136,16 +136,3 @@ safe_call install_gmp "$EXTERNAL"
 safe_call install_libdai "$EXTERNAL"
 safe_call install_daimrf "$EXTERNAL" "$ENV"
 safe_call install_nltk
-
-cat <<EOF
-
-Run:
-
-    source activate "\$(pwd)/$ENV"
-
-to activate the environment.  When you're done you can run
-
-    source deactivate
-
-to close the environement.
-EOF
