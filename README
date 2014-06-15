@@ -1,0 +1,7 @@
+Code for the paper
+
+Misha Denil, Babak Shakibi, Laurent Dinh, Marc’Aurelio Ranzato, and Nando de Freitas. Predicting Parameters in Deep Learning. In Neural Information Processing Systems (NIPS), 2013.
+
+Run ./setup_environment.sh to install a local python environment with depenedencies.
+
+Run scripts through run.sh
